@@ -1,4 +1,4 @@
-<h1 align="center">VDOS · Extracción y explotación de datos de fondos de inversión con IA</h1>
+<h1 align="center">VDOS Fondos · Extracción y explotación de datos de fondos con IA</h1>
 
 <p align="center">
   <em>Del folleto de la CNMV a un dato canónico explotable: extracción con reglas + LLM,
@@ -60,6 +60,37 @@ un asesor por perfil de riesgo y comparador de fondos.
 
 <p align="center"><img src="docs/arquitectura_rag.png" width="640" alt="Arquitectura RAG"></p>
 
+## Cómo funciona la app
+
+<p align="center"><img src="docs/arquitectura_app.png" width="880" alt="Arquitectura de la app: Datos, Backend FastAPI, API REST, Frontend, Gestor"></p>
+
+La aplicación se sirve desde el backend FastAPI sobre el universo de fondos y
+tiene cuatro vistas:
+
+- **Inicio** — KPIs del catálogo (ISIN, gestoras y categorías), dos
+  distribuciones (por categoría y por gestora) y el estado del índice del RAG.
+- **Comparador** — eliges dos fondos y calcula métricas a partir del histórico de
+  valor liquidativo (rentabilidades, volatilidad, Sharpe, comisiones) más un
+  resumen en lenguaje natural de las diferencias.
+- **Asesor IA al gestor** — introduces el perfil del cliente (banda de volatilidad
+  MiFID); un filtro determinista reduce el universo a los fondos admisibles y el
+  LLM ordena y justifica la recomendación citando las cifras de cada ficha.
+- **Estudio comparativo** — la evaluación del TFG: asesor propio frente a un
+  asistente generalista sobre varios perfiles de inversor.
+
+| Endpoint | Descripción |
+|---|---|
+| `GET /api/health` | Comprobación de estado |
+| `GET /api/stats` | KPIs del catálogo |
+| `GET /api/distribucion/categoria` | Distribución por categoría |
+| `GET /api/distribucion/gestora` | Top-N gestoras por número de fondos |
+| `GET /api/index/status` | Estado del índice de embeddings (RAG) |
+| `GET /api/funds/...` | Datos y series del comparador |
+| `POST /api/advisor/...` | Recomendación del asesor por perfil |
+
+> Con los datos de muestra de [`data_muestra/`](data_muestra/) puedes levantar
+> la app en local y navegar las vistas con fondos ficticios.
+
 ## Estructura
 
 ```
@@ -79,18 +110,6 @@ vdos-fondos-tfg/
 │   └── frontend/              # HTML + Tailwind + JS vanilla
 └── data_muestra/              # datos FICTICIOS para poder ejecutar
 ```
-
-## Demo rápida (un comando)
-
-Para verla funcionando en local con los datos de muestra:
-
-- **Windows**: clic derecho en `demo.ps1` → *Ejecutar con PowerShell* (o `./demo.ps1`).
-- **macOS / Linux**: `./demo.sh`
-
-El script crea el entorno, instala dependencias, genera la base de datos de
-muestra y arranca la app en <http://localhost:8000>. Las vistas Inicio y
-Comparador funcionan sin clave; el Asesor y el chat requieren una `OPENAI_API_KEY`
-real en el archivo `.env`.
 
 ## Puesta en marcha
 
@@ -116,42 +135,8 @@ python scripts/build_db.py              # genera la BD del comparador (muestra)
 uvicorn app.main:app --reload           # http://localhost:8000
 ```
 
-## Cómo funciona la app web
-
-<p align="center"><img src="docs/arquitectura_app.png" width="880" alt="Arquitectura de la app: Datos, Backend FastAPI, API REST, Frontend, Gestor"></p>
-
-La aplicación se sirve desde el backend FastAPI sobre el universo de fondos y
-tiene cuatro vistas:
-
-- **Inicio** — panel con los KPIs del catálogo (número de ISIN, gestoras y
-  categorías) y dos distribuciones (por categoría y por gestora), además del
-  estado del índice del RAG.
-- **Comparador** — eliges dos fondos y la app calcula métricas cuantitativas a
-  partir del histórico de valor liquidativo (rentabilidades, volatilidad,
-  Sharpe, comisiones) y genera un resumen en lenguaje natural de las
-  diferencias.
-- **Asesor IA al gestor** — introduces el perfil del cliente (banda de
-  volatilidad MiFID); un filtro determinista reduce el universo a los fondos
-  admisibles y el LLM ordena y justifica la recomendación citando las cifras de
-  cada ficha, sin inventar fondos ni datos.
-- **Estudio comparativo** — la evaluación del TFG: compara las recomendaciones
-  del asesor propio frente a un asistente generalista sobre varios perfiles de
-  inversor.
-
-Endpoints principales de la API (`/api/...`):
-
-| Endpoint | Descripción |
-|---|---|
-| `GET /api/health` | Comprobación de estado |
-| `GET /api/stats` | KPIs del catálogo |
-| `GET /api/distribucion/categoria` | Distribución por categoría |
-| `GET /api/distribucion/gestora` | Top-N gestoras por número de fondos |
-| `GET /api/index/status` | Estado del índice de embeddings (RAG) |
-| `GET /api/funds/...` | Datos y series del comparador |
-| `POST /api/advisor/...` | Recomendación del asesor por perfil |
-
-> Con los datos de muestra de [`data_muestra/`](data_muestra/) puedes levantar
-> la app en local y navegar las vistas con fondos ficticios.
+**Demo en un comando**: en Windows ejecuta `demo.ps1`; en macOS/Linux `./demo.sh`
+(crea el entorno, instala dependencias, genera la BD de muestra y arranca la app).
 
 ## Stack
 
