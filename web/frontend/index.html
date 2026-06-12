@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inicio · VDOS Funds Explorer</title>
+
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!--
+      Tokens VDOS (variables CSS) + base. Esto cubre la mayoria de la vista
+      Inicio sin necesidad de Tailwind compilado. Cuando se ejecute
+      `npm install && npm run build:css` el bundle se sustituira por
+      `<link rel="stylesheet" href="/styles/main.css">` y se eliminara el
+      Play CDN de abajo.
+    -->
+    <link rel="stylesheet" href="/styles/tokens.css" />
+
+    <!--
+      Play CDN de Tailwind. Solo para desarrollo, mientras no se compile
+      el bundle estatico. Sustituir por /styles/main.css en cuanto exista.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              vdos: {
+                50:  '#E6F1FB',
+                100: '#B5D4F4',
+                400: '#378ADD',
+                500: '#185FA5',
+                700: '#0C447C',
+                900: '#042C53',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Plotly para los bar charts (cdn.plot.ly; el de Cloudflare daba 404) -->
+    <script src="https://cdn.plot.ly/plotly-basic-2.35.2.min.js"></script>
+  </head>
+
+  <body class="min-h-screen">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-4">
+        <span class="wordmark">VDOS</span>
+        <span class="divider-v"></span>
+        <span class="view-title">Funds Explorer · Inicio</span>
+
+        <nav class="ml-auto flex items-center gap-1">
+          <a class="nav-link active" href="/index.html">Inicio</a>
+          <a class="nav-link" href="/asesor.html">Asesor IA</a>
+          <a class="nav-link" href="/comparador.html">Comparador</a>
+          <a class="nav-link" href="/estudio.html">Estudio</a>
+        </nav>
+
+        <span id="index-status" class="index-pill ml-2">
+          <span class="dot"></span>
+          <span class="label">Consultando índice…</span>
+        </span>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <!-- Bienvenida + qué hace la herramienta -->
+      <section class="space-y-3">
+        <h1>Bienvenido a VDOS Funds Explorer</h1>
+        <p class="max-w-3xl" style="color: var(--text-muted)">
+          Herramienta de análisis y asesoramiento de fondos CNMV para gestores y
+          analistas. Dos caminos disponibles desde la navegación superior:
+          Asesor IA y Comparador.
+        </p>
+      </section>
+
+      <!-- KPIs -->
+      <section>
+        <h2 class="mb-3">Estado del catálogo</h2>
+        <div id="kpi-error" class="text-sm" style="color: var(--loss-700)"></div>
+        <div id="kpi-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="metric-card">
+            <div class="metric-label">ISINs</div>
+            <div id="kpi-isins" class="metric-value mono">—</div>
+            <div class="metric-help">Total de fondos en el catálogo</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Gestoras</div>
+            <div id="kpi-gestoras" class="metric-value mono">—</div>
+            <div class="metric-help">P02 distintos</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Categorías VDOS</div>
+            <div id="kpi-categorias" class="metric-value mono">—</div>
+            <div class="metric-help">P00 distintos</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Distribuciones -->
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card">
+          <h3 class="mb-1">Distribución por categoría VDOS</h3>
+          <p class="text-xs mb-3" style="color: var(--text-muted)">
+            Eje: número de ISINs por categoría (P00).
+          </p>
+          <div id="chart-categoria" style="height: 360px;"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="mb-1">Distribución por gestora (top 20)</h3>
+          <p class="text-xs mb-3" style="color: var(--text-muted)">
+            Gestoras con más fondos en el catálogo.
+          </p>
+          <div id="chart-gestora" style="height: 360px;"></div>
+        </div>
+      </section>
+
+      <!-- Qué puedes hacer -->
+      <section>
+        <h2 class="mb-3">¿Qué puedes hacer aquí?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a href="/asesor.html" class="card-accent block hover:bg-vdos-50 transition-colors">
+            <h3>Asesor IA</h3>
+            <p class="text-sm mt-2" style="color: var(--text-muted)">
+              Introduce el perfil del cliente (edad, riesgo, horizonte,
+              preferencias) y la IA recomienda fondos con justificación,
+              cartera modelo y evolución del VL. Incluye noticias por sector.
+            </p>
+          </a>
+          <a href="/comparador.html" class="card-accent block hover:bg-vdos-50 transition-colors">
+            <h3>Comparador</h3>
+            <p class="text-sm mt-2" style="color: var(--text-muted)">
+              Selecciona dos fondos y compáralos lado a lado. Histórico de VL,
+              rentabilidades, riesgo, comisiones, correlación y resumen IA.
+            </p>
+          </a>
+        </div>
+      </section>
+
+      <footer class="text-xs pt-8" style="color: var(--text-faint)">
+        VDOS Stochastics · TFG Elena Velázquez Verduras · Datos CNMV.
+      </footer>
+    </main>
+
+    <script type="module" src="/scripts/pages/inicio.js"></script>
+  </body>
+</html>

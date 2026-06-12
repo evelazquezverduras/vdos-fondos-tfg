@@ -1,0 +1,10 @@
+Carpeta para folletos de fondos en PDF (entrada del extractor).
+
+En la versión saneada NO se incluyen folletos reales. Para probar el
+extractor, coloca aquí folletos públicos de la CNMV en PDF y ejecuta el
+pipeline (ver README). Los registros ya extraídos de EJEMPLO están en:
+
+    data_muestra/pdfs_extracted.json         (etiquetas legibles)
+    data_muestra/pdfs_extracted_codes.json   (códigos neutros)
+
+que es lo que consumen la web y el RAG en este repo de demostración.

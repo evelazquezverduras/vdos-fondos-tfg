@@ -1,0 +1,16 @@
+/*
+  input.css — Entrada de Tailwind. Compilar con:
+    npx tailwindcss -i ./styles/input.css -o ./styles/main.css --watch
+*/
+
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .vdos-link {
+    @apply text-vdos-500 hover:text-vdos-700 underline-offset-2 hover:underline;
+  }
+}

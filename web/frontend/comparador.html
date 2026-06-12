@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Comparador · VDOS Funds Explorer</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="/styles/tokens.css" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              vdos: {
+                50:  '#E6F1FB',
+                100: '#B5D4F4',
+                400: '#378ADD',
+                500: '#185FA5',
+                700: '#0C447C',
+                900: '#042C53',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Plotly completo (incluye histogram) -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  </head>
+
+  <body class="min-h-screen">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-4">
+        <span class="wordmark">VDOS</span>
+        <span class="divider-v"></span>
+        <span class="view-title">Funds Explorer · Comparador</span>
+
+        <nav class="ml-auto flex items-center gap-1">
+          <a class="nav-link" href="/index.html">Inicio</a>
+          <a class="nav-link" href="/asesor.html">Asesor IA</a>
+          <a class="nav-link active" href="/comparador.html">Comparador</a>
+          <a class="nav-link" href="/estudio.html">Estudio</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <!-- Intro -->
+      <section class="space-y-2">
+        <h1>Comparador de dos fondos</h1>
+        <p class="max-w-3xl" style="color: var(--text-muted)">
+          Selecciona dos fondos del catálogo (<span id="count-con-vl">…</span> con histórico de VL).
+          Compara su evolución, rentabilidades, riesgo, comisiones y obtén un
+          análisis cuantitativo derivado del histórico diario.
+        </p>
+      </section>
+
+      <!-- Historial reciente (sessionStorage) -->
+      <section id="history-section" class="hidden">
+        <p class="text-xs mb-2" style="color: var(--text-muted)">Comparaciones recientes:</p>
+        <div id="history-row" class="history-row"></div>
+      </section>
+
+      <!-- Filtros pre-búsqueda -->
+      <section class="card">
+        <h2 class="mb-3">Filtros opcionales</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="form-label" for="filter-tipo">Tipo de fondo</label>
+            <select id="filter-tipo" class="form-select">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="filter-gestora">Gestora</label>
+            <select id="filter-gestora" class="form-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <label class="form-check" style="cursor: pointer;">
+              <input id="filter-brochure" type="checkbox" />
+              <span>Solo con folleto CNMV</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Selectores A y B -->
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="fund-search-wrap">
+          <label class="form-label" for="search-a">Fondo A</label>
+          <input id="search-a" class="form-input" placeholder="ISIN, nombre o gestora…" />
+          <div id="dropdown-a" class="fund-search-dropdown hidden"></div>
+        </div>
+        <div class="fund-search-wrap">
+          <label class="form-label" for="search-b">Fondo B</label>
+          <input id="search-b" class="form-input" placeholder="ISIN, nombre o gestora…" />
+          <div id="dropdown-b" class="fund-search-dropdown hidden"></div>
+        </div>
+      </section>
+
+      <!-- Mensaje de estado / error -->
+      <div id="status" class="text-sm" style="color: var(--text-muted)"></div>
+
+      <!-- Resultado (oculto hasta tener AB) -->
+      <div id="result" class="space-y-8 hidden">
+        <!-- Cabeceras de fondo A y B -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div id="fund-header-a" class="fund-header fund-header-a"></div>
+          <div id="fund-header-b" class="fund-header fund-header-b"></div>
+        </section>
+
+        <!-- Controles del gráfico principal -->
+        <section class="card">
+          <div class="chart-controls">
+            <div class="chart-controls-group">
+              <span class="chart-controls-label">Modo:</span>
+              <button class="toggle-btn active" data-mode="base100">Base 100</button>
+              <button class="toggle-btn" data-mode="vl">VL (€)</button>
+              <button class="toggle-btn" data-mode="ret_acum">Rent. acumulada %</button>
+              <button class="toggle-btn" data-mode="drawdown">Drawdown</button>
+            </div>
+            <div class="chart-controls-group">
+              <span class="chart-controls-label">Rango:</span>
+              <button class="toggle-btn" data-range="1m">1M</button>
+              <button class="toggle-btn" data-range="3m">3M</button>
+              <button class="toggle-btn" data-range="6m">6M</button>
+              <button class="toggle-btn" data-range="ytd">YTD</button>
+              <button class="toggle-btn" data-range="1y">1A</button>
+              <button class="toggle-btn" data-range="3y">3A</button>
+              <button class="toggle-btn active" data-range="5y">5A</button>
+              <button class="toggle-btn" data-range="max">Máx</button>
+            </div>
+            <div class="chart-controls-group">
+              <span class="chart-controls-label">Escala:</span>
+              <button class="toggle-btn active" data-scale="linear">Lineal</button>
+              <button class="toggle-btn" data-scale="log">Log</button>
+            </div>
+          </div>
+          <div id="chart-main" style="height: 420px;"></div>
+        </section>
+
+        <!-- Métricas básicas (4 tablas) -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="card"><div id="table-returns"></div></div>
+          <div class="card"><div id="table-risk"></div></div>
+          <div class="card">
+            <div id="table-fees"></div>
+            <div id="chart-fees" style="height: 200px; margin-top: 14px;"></div>
+          </div>
+          <div class="card"><div id="table-structure"></div></div>
+        </section>
+
+        <!-- Análisis avanzado en expander -->
+        <details class="expander">
+          <summary>Análisis avanzado (anualizadas, alfa/beta, cuartiles)</summary>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-3">
+            <div id="table-ann"></div>
+            <div id="table-bench"></div>
+            <div id="table-quart" class="lg:col-span-2"></div>
+          </div>
+        </details>
+
+        <!-- Análisis cuantitativo derivado -->
+        <section class="card space-y-5">
+          <h2>Análisis cuantitativo derivado del histórico VL</h2>
+
+          <div id="derived-cards" class="derived-grid"></div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <h3 class="mb-1">Volatilidad rolling 60 días (anualizada)</h3>
+              <p class="text-xs mb-2" style="color: var(--text-muted)">
+                Cómo cambia el riesgo a lo largo del tiempo.
+              </p>
+              <div id="chart-rolling" style="height: 280px;"></div>
+            </div>
+            <div>
+              <h3 class="mb-1">Distribución de retornos diarios</h3>
+              <p class="text-xs mb-2" style="color: var(--text-muted)">
+                Forma de la distribución (sesgo, colas) lado a lado.
+              </p>
+              <div id="chart-hist" style="height: 280px;"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Política CNMV (cuando esté disponible) -->
+        <section id="brochure-section" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+          <details class="expander" id="brochure-a-wrap">
+            <summary>Política de inversión · Fondo A</summary>
+            <div id="brochure-a" class="citation-block" style="margin-top: 10px;"></div>
+          </details>
+          <details class="expander" id="brochure-b-wrap">
+            <summary>Política de inversión · Fondo B</summary>
+            <div id="brochure-b" class="citation-block" style="margin-top: 10px;"></div>
+          </details>
+        </section>
+
+        <!-- Resumen IA -->
+        <section class="card space-y-3">
+          <div class="flex items-center justify-between">
+            <h2>Resumen ejecutivo (IA)</h2>
+            <button id="btn-summary" class="btn-primary">Generar resumen</button>
+          </div>
+          <div id="summary-block" class="text-sm" style="color: var(--text-muted)">
+            Pulsa <em>Generar resumen</em> para que gpt-4o-mini sintetice las
+            diferencias clave entre los dos fondos.
+          </div>
+        </section>
+
+        <!-- Export -->
+        <section class="card">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h3>Exportar</h3>
+              <p class="text-xs" style="color: var(--text-muted)">
+                Descarga la comparativa en PDF (próximamente) o JSON crudo.
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <button id="btn-export-json" class="btn-ghost">JSON crudo</button>
+              <button id="btn-export-pdf" class="btn-ghost" disabled title="Próximamente">PDF</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="text-xs pt-8" style="color: var(--text-faint)">
+        VDOS Stochastics · TFG Elena Velázquez Verduras · Histórico VL diario.
+      </footer>
+    </main>
+
+    <script type="module" src="/scripts/pages/comparador.js"></script>
+  </body>
+</html>

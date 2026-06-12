@@ -1,0 +1,21 @@
+# --- Núcleo extractor + RAG ---
+pdfplumber>=0.11      # parseo de folletos PDF
+pandas>=2.0           # carga de catálogos y utilidades
+numpy>=1.26           # cálculos y almacén vectorial simple
+openai>=1.40          # clasificación, chat, asesor y noticias (gpt-4o-mini)
+google-generativeai>=0.7  # clasificador alternativo (opcional)
+xlrd>=2.0             # lectura de catálogos .xls (opcional, solo versión interna)
+
+# --- Backend web (FastAPI) ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+pydantic-settings>=2.3
+python-dotenv>=1.0
+
+# --- UI alternativa (Streamlit) ---
+streamlit>=1.36
+
+# --- Desarrollo / tests ---
+pytest>=8.0
+httpx>=0.27

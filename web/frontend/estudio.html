@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Estudio comparativo · VDOS Funds Explorer</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles/tokens.css" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              vdos: {
+                50: '#E6F1FB', 100: '#B5D4F4', 400: '#378ADD',
+                500: '#185FA5', 700: '#0C447C', 900: '#042C53',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Plotly completo (necesario para scatterpolar del radar) -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  </head>
+
+  <body class="min-h-screen">
+    <header class="app-header">
+      <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-4">
+        <span class="wordmark">VDOS</span>
+        <span class="divider-v"></span>
+        <span class="view-title">Funds Explorer · Estudio</span>
+
+        <nav class="ml-auto flex items-center gap-1">
+          <a class="nav-link" href="/index.html">Inicio</a>
+          <a class="nav-link" href="/asesor.html">Asesor IA</a>
+          <a class="nav-link" href="/comparador.html">Comparador</a>
+          <a class="nav-link active" href="/estudio.html">Estudio</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <!-- Hero -->
+      <section class="estudio-hero">
+        <h1>Estudio comparativo: Asesor VDOS frente a ChatGPT</h1>
+        <p>
+          Comparamos las recomendaciones de fondos del Asesor IA propio
+          (gpt-4o-mini sobre el catálogo CNMV de <span id="count-folletos">…</span> fondos) con las de
+          ChatGPT sin contexto. Cinco perfiles canónicos de cliente, los
+          mismos para ambos. Evaluación con rúbrica automática sobre
+          presencia del ISIN en la base VDOS y coherencia ISIN↔nombre,
+          adecuación de riesgo, respeto de exclusiones ESG y coherencia de
+          horizonte.
+        </p>
+      </section>
+
+      <!-- Selector de perfil -->
+      <section>
+        <h2 class="mb-3">Perfiles de cliente</h2>
+        <div id="perfil-chip-row" class="perfil-chip-row">
+          <span class="text-sm" style="color: var(--text-muted)">Cargando perfiles…</span>
+        </div>
+      </section>
+
+      <!-- Detalle del perfil seleccionado -->
+      <section id="perfil-detail" class="estudio-perfil-card hidden"></section>
+
+      <!-- Bloque del prompt para copiar -->
+      <section id="prompt-section" class="hidden">
+        <details class="expander" open>
+          <summary>1 · Prompt para copiar a chat.openai.com</summary>
+          <p class="text-sm mb-3 mt-2" style="color: var(--text-muted)">
+            Copia este prompt, pégalo en
+            <a href="https://chat.openai.com" target="_blank" rel="noreferrer"
+               style="color: var(--vdos-blue-700); text-decoration: underline;">chat.openai.com</a>
+            y pega aquí abajo la respuesta JSON que devuelva.
+          </p>
+          <div class="flex gap-2 mb-2">
+            <button id="btn-copy-prompt" class="btn-ghost">Copiar prompt</button>
+            <span id="copy-status" class="text-xs self-center" style="color: var(--text-muted)"></span>
+          </div>
+          <div id="prompt-box" class="prompt-box"></div>
+        </details>
+      </section>
+
+      <!-- Caja de paste de ChatGPT -->
+      <section id="paste-section" class="hidden">
+        <details class="expander" open>
+          <summary>2 · Pegar respuesta de ChatGPT</summary>
+          <div class="space-y-2 mt-2">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div class="md:col-span-1">
+                <label class="form-label" for="paste-modelo">Modelo usado</label>
+                <select id="paste-modelo" class="form-select">
+                  <option value="gpt-4o">gpt-4o</option>
+                  <option value="gpt-4o-mini">gpt-4o-mini</option>
+                  <option value="gpt-4">gpt-4</option>
+                  <option value="o3-mini">o3-mini</option>
+                  <option value="chatgpt-otro">otro</option>
+                </select>
+              </div>
+            </div>
+            <label class="form-label" for="paste-text">JSON o texto de ChatGPT</label>
+            <textarea
+              id="paste-text"
+              class="form-textarea"
+              rows="6"
+              placeholder='{"resumen_ejecutivo":"...","fondos_recomendados":[{"isin":"ES...", ...}], ...}'
+            ></textarea>
+            <div class="flex gap-2">
+              <button id="btn-save-paste" class="btn-primary">Guardar respuesta de ChatGPT</button>
+              <button id="btn-delete-paste" class="btn-ghost">Borrar respuesta guardada</button>
+              <span id="paste-status" class="text-xs self-center" style="color: var(--text-muted)"></span>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- Botón ejecutar Asesor -->
+      <section id="run-section" class="hidden">
+        <details class="expander" open>
+          <summary>3 · Ejecutar el Asesor VDOS para este perfil</summary>
+          <p class="text-sm mb-2 mt-2" style="color: var(--text-muted)">
+            Llama al endpoint <code>/api/advisor/recommend</code> con el perfil
+            seleccionado y cachea la respuesta en disco. La rúbrica se aplica
+            automáticamente.
+          </p>
+          <div class="flex gap-2 items-center">
+            <button id="btn-run-asesor" class="btn-primary">Ejecutar Asesor VDOS</button>
+            <span id="run-status" class="text-xs" style="color: var(--text-muted)"></span>
+          </div>
+        </details>
+      </section>
+
+      <!-- Comparativa lado a lado -->
+      <section id="comparison-section" class="hidden">
+        <h2 class="mb-3">4 · Comparativa</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <div class="system-header asesor">
+              <div>
+                <h3>Asesor VDOS</h3>
+                <div class="sub" id="meta-asesor">— sin datos —</div>
+              </div>
+              <div id="score-asesor"></div>
+            </div>
+            <div class="system-body" id="body-asesor">
+              <div class="no-data">Ejecuta el Asesor VDOS arriba para ver resultados.</div>
+            </div>
+          </div>
+          <div>
+            <div class="system-header chatgpt">
+              <div>
+                <h3>ChatGPT</h3>
+                <div class="sub" id="meta-chatgpt">— sin datos —</div>
+              </div>
+              <div id="score-chatgpt"></div>
+            </div>
+            <div class="system-body" id="body-chatgpt">
+              <div class="no-data">Pega la respuesta de ChatGPT arriba para ver resultados.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Metricas en barras -->
+      <section id="bars-section" class="card hidden">
+        <h2 class="mb-3">Rúbrica detallada</h2>
+        <p class="text-xs mb-4" style="color: var(--text-muted)">
+          Cada métrica se mide como % de fondos que cumplen el criterio
+          correspondiente. Faltan datos donde el ISIN no existe en CNMV (no
+          se puede aplicar el resto de la rúbrica).
+        </p>
+        <div id="bars-content" class="space-y-4"></div>
+      </section>
+
+      <!-- Agregado: 5 perfiles · ambos sistemas -->
+      <section id="agregado-section" class="card">
+        <h2 class="mb-2">Tabla agregada · score global por perfil</h2>
+        <p class="text-xs mb-3" style="color: var(--text-muted)">
+          Resumen de los 5 perfiles con los dos sistemas. El score combina
+          las 6 métricas con pesos: ISIN en base (2), nacional (1,5), riesgo
+          (2), horizonte (1), ESG (1,5), cobertura sectorial (1).
+        </p>
+        <div id="agregado-content">
+          <div class="empty">Cargando agregado…</div>
+        </div>
+        <div id="agregado-chart" class="mt-6" style="height: 320px;"></div>
+      </section>
+
+      <!-- Panel avanzado: radar objetivo + kappa de Cohen -->
+      <section id="panel-avanzado-section" class="card hidden space-y-6">
+        <div>
+          <h2 class="mb-1">5 · Panel avanzado · radar objetivo + Kappa</h2>
+          <p class="text-xs" style="color: var(--text-muted)">
+            Dos miradas complementarias: métricas objetivas que evalúan cada
+            sistema por separado (no necesitan juez humano) y Kappa de Cohen
+            que mide el acuerdo entre Asesor y ChatGPT sobre la unión de
+            recomendaciones.
+          </p>
+        </div>
+
+        <!-- Radar 7 ejes -->
+        <div>
+          <h3 class="mb-1">Métricas objetivas (radar 7 ejes)</h3>
+          <p class="text-xs mb-3" style="color: var(--text-muted)">
+            Cada eje en escala 0–100%. Cuanto más fuera, mejor. El Asesor
+            VDOS aparece en azul oscuro; ChatGPT en verde.
+          </p>
+          <div id="radar-objetivo" style="height: 380px;"></div>
+        </div>
+
+        <!-- Tabla Kappa -->
+        <div>
+          <h3 class="mb-1">Acuerdo Asesor ↔ ChatGPT (Kappa de Cohen)</h3>
+          <p class="text-xs mb-3" style="color: var(--text-muted)">
+            Kappa mide acuerdo descontando el azar. Interpretación
+            (Landis &amp; Koch 1977): &lt; 0,20 leve · 0,21–0,40 bajo ·
+            0,41–0,60 moderado · 0,61–0,80 sustancial · &gt; 0,81 casi
+            perfecto. PABAK y Gwet AC1 son alternativas robustas a clases
+            desbalanceadas.
+          </p>
+          <div id="kappa-summary" class="mb-3"></div>
+          <div id="kappa-table-wrap" class="overflow-x-auto"></div>
+        </div>
+      </section>
+
+      <!-- Bloque metodologico (estatico) -->
+      <section id="metodologia-section" class="card hidden">
+        <details class="expander" open>
+          <summary>6 · Fundamentos metodológicos</summary>
+          <div class="mt-3 space-y-3 text-sm" style="color: var(--vdos-blue-900)">
+            <p>
+              El estudio compara dos sistemas de recomendación de fondos
+              (Asesor VDOS y ChatGPT) bajo tres niveles de evaluación:
+            </p>
+            <ol class="list-decimal pl-5 space-y-2">
+              <li>
+                <strong>Métricas objetivas (sin juez humano):</strong> cada
+                sistema se evalúa por separado contra reglas verificables
+                de forma automática:
+                <code>tasa de alucinación = 1 − |ISINs en base VDOS con nombre coherente| / |total|</code>,
+                adecuación de riesgo, respeto de exclusiones ESG, cobertura
+                sectorial. Nota: el chequeo es contra la base VDOS (3.615
+                fondos), no contra todo el registro CNMV; por eso un fondo real
+                no incluido en la base puede contar como no verificable. El
+                Asesor parte con ventaja en este eje porque está restringido al
+                catálogo VDOS por diseño.
+              </li>
+              <li>
+                <strong>Kappa de Cohen Asesor ↔ ChatGPT (descriptivo):</strong>
+                κ = (pₒ − pₑ) / (1 − pₑ). Mide el acuerdo entre los dos
+                sistemas sobre la unión de fondos recomendados. Para
+                variables ordinales (banda de peso, PRIESGOF) usamos
+                <strong>kappa ponderado cuadrático</strong>:
+                wᵢⱼ = 1 − (i − j)² / (k − 1)².
+                Reportamos intervalo de confianza al 95% (Fleiss-Cohen),
+                acuerdo bruto pₒ y, en variables binarias con clases
+                desbalanceadas, PABAK (2pₒ − 1) y Gwet AC1.
+                <em>Importante: este kappa mide coincidencia, no quién
+                acierta.</em>
+              </li>
+              <li>
+                <strong>Kappa vs experto humano (trabajo futuro):</strong>
+                comparación de κ(Asesor, expertos) frente a κ(ChatGPT,
+                expertos). Requiere un panel de 3+ gestores de banca privada
+                evaluando cada recomendación en doble ciego. Si hay ≥3
+                evaluadores se usa Fleiss' κ. Es la única vía rigurosa para
+                determinar cuál sistema se acerca más al criterio humano.
+              </li>
+            </ol>
+            <p class="text-xs mt-3" style="color: var(--text-muted)">
+              <strong>Referencias:</strong> Cohen (1960). Landis &amp; Koch
+              (1977). Fleiss &amp; Cohen (1973). Byrt et al. (1993) PABAK.
+              Gwet (2008) AC1. Herlocker et al. (2004) IR metrics.
+              Aggarwal (2016) Recommender Systems: The Textbook.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Resumen global del estudio -->
+      <section id="resumen-section" class="card hidden">
+        <h2 class="mb-1">Resumen global del estudio</h2>
+        <p class="text-xs mb-4" style="color: var(--text-muted)">
+          Medias sobre los perfiles que tienen recomendación de ambos sistemas.
+          La conclusión es automática y se basa en el score medio y en las
+          victorias por perfil.
+        </p>
+
+        <!-- Cabecera: medias de score, lado a lado -->
+        <div id="resumen-headline" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"></div>
+
+        <!-- Barras de medias por métrica -->
+        <h3 class="mb-2">Medias por métrica</h3>
+        <div id="resumen-bars" class="space-y-2 mb-6"></div>
+
+        <!-- Veredicto -->
+        <h3 class="mb-2">Veredicto</h3>
+        <div id="resumen-veredicto" class="text-sm" style="color: var(--vdos-blue-900)"></div>
+      </section>
+
+      <footer class="text-xs pt-8" style="color: var(--text-faint)">
+        VDOS Stochastics · TFG Elena Velázquez Verduras · Estudio comparativo.
+      </footer>
+    </main>
+
+    <script type="module" src="/scripts/pages/estudio.js"></script>
+  </body>
+</html>

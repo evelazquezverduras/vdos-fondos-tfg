@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Asesor IA · VDOS Funds Explorer</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="/styles/tokens.css" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              vdos: {
+                50: '#E6F1FB', 100: '#B5D4F4', 400: '#378ADD',
+                500: '#185FA5', 700: '#0C447C', 900: '#042C53',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+
+  <body class="min-h-screen">
+    <header class="app-header">
+      <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-4">
+        <span class="wordmark">VDOS</span>
+        <span class="divider-v"></span>
+        <span class="view-title">Funds Explorer · Asesor IA</span>
+
+        <nav class="ml-auto flex items-center gap-1">
+          <a class="nav-link" href="/index.html">Inicio</a>
+          <a class="nav-link active" href="/asesor.html">Asesor IA</a>
+          <a class="nav-link" href="/comparador.html">Comparador</a>
+          <a class="nav-link" href="/estudio.html">Estudio</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <section>
+        <h1 class="mb-2">Asesor IA al gestor</h1>
+        <p class="max-w-3xl text-sm" style="color: var(--text-muted)">
+          Introduce el perfil del cliente y la IA recomendará fondos del
+          catálogo CNMV con justificación, cartera modelo y noticias
+          relacionadas. Los datos de identidad son opcionales y solo viajan en
+          memoria durante la petición.
+        </p>
+      </section>
+
+      <!-- Formulario -->
+      <form id="advisor-form" class="card space-y-6" autocomplete="off">
+        <!-- Gestor -->
+        <div>
+          <h3 class="mb-2">Contexto del gestor</h3>
+          <label class="form-label" for="gestor-banco">Yo soy gestor de…</label>
+          <input
+            id="gestor-banco"
+            class="form-input"
+            type="text"
+            placeholder="Banco / gestora del gestor (p. ej. Gestora Ejemplo)"
+          />
+          <p class="text-xs mt-1" style="color: var(--text-muted)">
+            Si lo rellenas, la IA priorizará fondos de esa gestora y citará
+            alternativas similares.
+          </p>
+        </div>
+
+        <!-- Identidad -->
+        <div>
+          <h3 class="mb-2">Identidad (opcional)</h3>
+          <p class="text-xs mb-3" style="color: var(--text-muted)">
+            Solo se usan para personalizar el resumen ejecutivo. No se
+            persisten en disco ni en logs.
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="form-label" for="nombre">Nombre</label>
+              <input id="nombre" class="form-input" type="text" />
+            </div>
+            <div>
+              <label class="form-label" for="apellidos">Apellidos</label>
+              <input id="apellidos" class="form-input" type="text" />
+            </div>
+            <div>
+              <label class="form-label" for="dni">DNI / Identificador</label>
+              <input id="dni" class="form-input" type="text" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Demografia -->
+        <div>
+          <h3 class="mb-2">Demografía</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="form-label" for="edad">Edad</label>
+              <input id="edad" class="form-input" type="number" min="18" max="99" value="45" />
+            </div>
+            <div>
+              <label class="form-label" for="pais">País de residencia</label>
+              <input id="pais" class="form-input" type="text" value="España" />
+            </div>
+            <div>
+              <label class="form-label" for="renta">Renta anual</label>
+              <select id="renta" class="form-select"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Capacidad -->
+        <div>
+          <h3 class="mb-2">Capacidad de inversión</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="form-label" for="capital">Capital disponible (€)</label>
+              <input id="capital" class="form-input" type="number" min="0" step="1000" value="50000" />
+            </div>
+            <div>
+              <label class="form-label" for="aportacion">Aportaciones mensuales (€)</label>
+              <input id="aportacion" class="form-input" type="number" min="0" step="50" value="0" />
+            </div>
+            <div>
+              <label class="form-label" for="horizonte">Horizonte temporal</label>
+              <select id="horizonte" class="form-select"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Riesgo -->
+        <div>
+          <h3 class="mb-2">Perfil de riesgo</h3>
+          <div class="form-radio-row">
+            <span class="form-radio">
+              <input type="radio" id="r-cons" name="riesgo" value="Conservador" />
+              <label for="r-cons">Conservador</label>
+            </span>
+            <span class="form-radio">
+              <input type="radio" id="r-mod" name="riesgo" value="Moderado" checked />
+              <label for="r-mod">Moderado</label>
+            </span>
+            <span class="form-radio">
+              <input type="radio" id="r-agr" name="riesgo" value="Agresivo" />
+              <label for="r-agr">Agresivo</label>
+            </span>
+          </div>
+        </div>
+
+        <!-- Preferencias -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="mb-2">Sectores preferidos</h3>
+            <div id="sectores" class="flex flex-wrap gap-2"></div>
+          </div>
+          <div>
+            <h3 class="mb-2">Regiones preferidas</h3>
+            <div id="regiones" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+
+        <!-- Exclusiones -->
+        <div>
+          <h3 class="mb-2">Restricciones éticas / ESG</h3>
+          <div id="excluir" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- Notas -->
+        <div>
+          <label class="form-label" for="notas">Notas del gestor (opcional)</label>
+          <textarea
+            id="notas"
+            class="form-textarea"
+            rows="3"
+            placeholder="Comentarios libres, contexto del cliente, objetivos específicos…"
+          ></textarea>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center gap-4">
+          <button id="btn-submit" type="submit" class="btn-primary">
+            Generar recomendación
+          </button>
+          <div id="submit-status" class="text-sm" style="color: var(--text-muted)"></div>
+        </div>
+      </form>
+
+      <!-- Resultados -->
+      <div id="results" class="space-y-8"></div>
+    </main>
+
+    <script type="module" src="/scripts/pages/asesor.js"></script>
+  </body>
+</html>

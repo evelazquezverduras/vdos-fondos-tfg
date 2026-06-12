@@ -1,0 +1,14 @@
+{
+  "name": "vdos-funds-explorer-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Frontend estatico (HTML + Tailwind + JS vanilla) para VDOS Funds Explorer.",
+  "scripts": {
+    "build:css": "tailwindcss -i ./styles/input.css -o ./styles/main.css --minify",
+    "watch:css": "tailwindcss -i ./styles/input.css -o ./styles/main.css --watch"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "tailwindcss": "^3.4.13"
+  }
+}
