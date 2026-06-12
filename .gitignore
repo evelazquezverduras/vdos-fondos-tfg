@@ -1,0 +1,37 @@
+# Entornos y caché
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.cache/
+.pytest_cache/
+.ruff_cache/
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# Datos reales (NUNCA versionar)
+*.sqlite
+*.sqlite-journal
+pdfs_extracted*.json
+*.xls
+*.xlsx
+folletos/*.pdf
+criterios/
+diccionario/
+# excepción: datos de muestra ficticios
+!data_muestra/**
+
+# Node / build CSS
+node_modules/
+styles/main.css
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# mockup retirado (no subir)
+docs/app_preview.png

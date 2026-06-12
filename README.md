@@ -80,6 +80,18 @@ vdos-fondos-tfg/
 └── data_muestra/              # datos FICTICIOS para poder ejecutar
 ```
 
+## Demo rápida (un comando)
+
+Para verla funcionando en local con los datos de muestra:
+
+- **Windows**: clic derecho en `demo.ps1` → *Ejecutar con PowerShell* (o `./demo.ps1`).
+- **macOS / Linux**: `./demo.sh`
+
+El script crea el entorno, instala dependencias, genera la base de datos de
+muestra y arranca la app en <http://localhost:8000>. Las vistas Inicio y
+Comparador funcionan sin clave; el Asesor y el chat requieren una `OPENAI_API_KEY`
+real en el archivo `.env`.
+
 ## Puesta en marcha
 
 Requisitos: Python 3.10+ y, para las funciones de IA, una clave de OpenAI.
@@ -105,6 +117,8 @@ uvicorn app.main:app --reload           # http://localhost:8000
 ```
 
 ## Cómo funciona la app web
+
+<p align="center"><img src="docs/arquitectura_app.png" width="880" alt="Arquitectura de la app: Datos, Backend FastAPI, API REST, Frontend, Gestor"></p>
 
 La aplicación se sirve desde el backend FastAPI sobre el universo de fondos y
 tiene cuatro vistas:
@@ -136,9 +150,8 @@ Endpoints principales de la API (`/api/...`):
 | `GET /api/funds/...` | Datos y series del comparador |
 | `POST /api/advisor/...` | Recomendación del asesor por perfil |
 
-> Las capturas de la app en funcionamiento se omiten en esta versión pública
-> porque mostrarían datos reales de fondos. Con los datos de muestra
-> (`data_muestra/`) puedes levantarla en local y verla con fondos ficticios.
+> Con los datos de muestra de [`data_muestra/`](data_muestra/) puedes levantar
+> la app en local y navegar las vistas con fondos ficticios.
 
 ## Stack
 
