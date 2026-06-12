@@ -104,6 +104,42 @@ python scripts/build_db.py              # genera la BD del comparador (muestra)
 uvicorn app.main:app --reload           # http://localhost:8000
 ```
 
+## Cómo funciona la app web
+
+La aplicación se sirve desde el backend FastAPI sobre el universo de fondos y
+tiene cuatro vistas:
+
+- **Inicio** — panel con los KPIs del catálogo (número de ISIN, gestoras y
+  categorías) y dos distribuciones (por categoría y por gestora), además del
+  estado del índice del RAG.
+- **Comparador** — eliges dos fondos y la app calcula métricas cuantitativas a
+  partir del histórico de valor liquidativo (rentabilidades, volatilidad,
+  Sharpe, comisiones) y genera un resumen en lenguaje natural de las
+  diferencias.
+- **Asesor IA al gestor** — introduces el perfil del cliente (banda de
+  volatilidad MiFID); un filtro determinista reduce el universo a los fondos
+  admisibles y el LLM ordena y justifica la recomendación citando las cifras de
+  cada ficha, sin inventar fondos ni datos.
+- **Estudio comparativo** — la evaluación del TFG: compara las recomendaciones
+  del asesor propio frente a un asistente generalista sobre varios perfiles de
+  inversor.
+
+Endpoints principales de la API (`/api/...`):
+
+| Endpoint | Descripción |
+|---|---|
+| `GET /api/health` | Comprobación de estado |
+| `GET /api/stats` | KPIs del catálogo |
+| `GET /api/distribucion/categoria` | Distribución por categoría |
+| `GET /api/distribucion/gestora` | Top-N gestoras por número de fondos |
+| `GET /api/index/status` | Estado del índice de embeddings (RAG) |
+| `GET /api/funds/...` | Datos y series del comparador |
+| `POST /api/advisor/...` | Recomendación del asesor por perfil |
+
+> Las capturas de la app en funcionamiento se omiten en esta versión pública
+> porque mostrarían datos reales de fondos. Con los datos de muestra
+> (`data_muestra/`) puedes levantarla en local y verla con fondos ficticios.
+
 ## Stack
 
 `Python` · `pdfplumber` · `OpenAI gpt-4o-mini` · `FastAPI` · `Uvicorn` ·
