@@ -1,4 +1,4 @@
-<h1 align="center">VDOS Fondos · Extracción y explotación de datos de fondos con IA</h1>
+<h1 align="center">VDOS · Extracción y explotación de datos de fondos de inversión con IA</h1>
 
 <p align="center">
   <em>Del folleto de la CNMV a un dato canónico explotable: extracción con reglas + LLM,
